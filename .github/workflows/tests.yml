@@ -67,5 +67,5 @@ jobs:
         if: contains(steps.run_script.outputs.script_output, 'PROVISIONING')
         run: |
           curl -H "Content-Type: application/json" \
-          -d "{\"content\": \"🎉 **Oracle VM Provisioned!**\n✅ Your VM is now PROVISIONING!\n⚠️ Go to Oracle Console to check your instance.\n🛑 **DELETE the GitHub workflow now!**\"}" \
+          -d "{\"content\": \"@everyone 🎉 **Oracle VM Provisioned!**\n✅ Your VM is now PROVISIONING!\n⚠️ Go to Oracle Console to check your instance.\n🛑 **DELETE the GitHub workflow now!**\"}" \
           ${{ secrets.DISCORD_WEBHOOK_URL }}
