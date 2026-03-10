@@ -1,5 +1,4 @@
 name: Tests
-
 on:
   push:
     branches:
@@ -25,24 +24,25 @@ jobs:
           php-version: ${{ matrix.php-versions }}
       - name: Validate composer.json and composer.lock
         run: composer validate
-
       - name: Get Composer Cache Directory
         id: composer-cache
         run: |
-          echo "::set-output name=dir::$(composer config cache-files-dir)"
+          echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
       - uses: actions/cache@v4
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
           key: ${{ runner.os }}-${{ matrix.php-version }}-composer-${{ matrix.dependencies }}-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-${{ matrix.php-version }}-composer-${{ matrix.dependencies }}-
-
       - name: Install dependencies
         run: |
           composer update --prefer-dist --no-progress
       - name: Run script
+        id: run_script
         run: |
-          php index.php
+          OUTPUT=$(php index.php)
+          echo "$OUTPUT"
+          echo "script_output=$OUTPUT" >> $GITHUB_OUTPUT
         env:
           OCI_REGION: ${{ secrets.OCI_REGION }}
           OCI_USER_ID: ${{ secrets.OCI_USER_ID }}
@@ -63,3 +63,9 @@ jobs:
           TEST_IMAGE_ID: ${{ secrets.TEST_IMAGE_ID }}
           TEST_SUBNET_ID: ${{ secrets.TEST_SUBNET_ID }}
 
+      - name: Notify Discord if provisioned
+        if: contains(steps.run_script.outputs.script_output, 'PROVISIONING')
+        run: |
+          curl -H "Content-Type: application/json" \
+          -d "{\"content\": \"🎉 **Oracle VM Provisioned!**\n✅ Your VM is now PROVISIONING!\n⚠️ Go to Oracle Console to check your instance.\n🛑 **DELETE the GitHub workflow now!**\"}" \
+          ${{ secrets.DISCORD_WEBHOOK_URL }}
