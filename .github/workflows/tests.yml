@@ -34,6 +34,9 @@ jobs:
           key: ${{ runner.os }}-${{ matrix.php-version }}-composer-${{ matrix.dependencies }}-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-${{ matrix.php-version }}-composer-${{ matrix.dependencies }}-
+      - name: Install dependencies
+        run: |
+          composer install --prefer-dist --no-progress
       - name: Run script
         id: run_script
         run: |
@@ -63,7 +66,6 @@ jobs:
           AD_ALWAYS_FREE: ${{ secrets.AD_ALWAYS_FREE }}
           TEST_IMAGE_ID: ${{ secrets.TEST_IMAGE_ID }}
           TEST_SUBNET_ID: ${{ secrets.TEST_SUBNET_ID }}
-
       - name: Notify Discord if provisioned
         if: steps.run_script.outputs.provisioned == 'true'
         run: |
