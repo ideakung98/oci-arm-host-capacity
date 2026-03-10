@@ -34,15 +34,16 @@ jobs:
           key: ${{ runner.os }}-${{ matrix.php-version }}-composer-${{ matrix.dependencies }}-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-${{ matrix.php-version }}-composer-${{ matrix.dependencies }}-
-      - name: Install dependencies
-        run: |
-          composer update --prefer-dist --no-progress
       - name: Run script
         id: run_script
         run: |
           OUTPUT=$(php index.php)
           echo "$OUTPUT"
-          echo "script_output=$OUTPUT" >> $GITHUB_OUTPUT
+          if echo "$OUTPUT" | grep -q "PROVISIONING"; then
+            echo "provisioned=true" >> $GITHUB_OUTPUT
+          else
+            echo "provisioned=false" >> $GITHUB_OUTPUT
+          fi
         env:
           OCI_REGION: ${{ secrets.OCI_REGION }}
           OCI_USER_ID: ${{ secrets.OCI_USER_ID }}
@@ -64,7 +65,7 @@ jobs:
           TEST_SUBNET_ID: ${{ secrets.TEST_SUBNET_ID }}
 
       - name: Notify Discord if provisioned
-        if: contains(steps.run_script.outputs.script_output, 'PROVISIONING')
+        if: steps.run_script.outputs.provisioned == 'true'
         run: |
           curl -H "Content-Type: application/json" \
           -d "{\"content\": \"@everyone 🎉 **Oracle VM Provisioned!**\n✅ Your VM is now PROVISIONING!\n⚠️ Go to Oracle Console to check your instance.\n🛑 **DELETE the GitHub workflow now!**\"}" \
